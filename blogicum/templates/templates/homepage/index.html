@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}
+  Анфиса для друзей. Главная
+{% endblock %}
+{% block content %}
+  <h1 class="pb-2 mb-0">Главная страница</h1>
+  <div class="row">
+    {% for ice_cream in ice_cream_list %}
+      {% include "includes/ice_cream_card.html" %}
+    {% endfor %}
+  </div>
+{% endblock %}
