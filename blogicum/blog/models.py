@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.urls import reverse
 
 TITLE_LIMIT = 30
 User = get_user_model()
@@ -83,6 +84,7 @@ class Post(BlogModel):
         null=True,
         verbose_name='Категория'
     )
+    image = models.ImageField('Фото', upload_to='posts_images', blank=True)
 
     class Meta:
         verbose_name = 'публикация'
@@ -92,3 +94,44 @@ class Post(BlogModel):
 
     def __str__(self):
         return self.title[:TITLE_LIMIT]
+
+    def get_absolute_url(self):
+        return reverse(
+            'blog:post_detail',
+            kwargs={'post_id': self.pk}
+        )
+
+    def comment_count(self):
+        return Comment.objects.filter(post=self.pk).count()
+
+
+class Comment(models.Model):
+    """Модель комментариев к публикациям."""
+
+    text = models.TextField('Текст комментария')
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        verbose_name='Публикация'
+    )
+    pub_date = models.DateTimeField(
+        'Дата и время комментария',
+        auto_now_add=True
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор комментария'
+    )
+
+    class Meta:
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'комментарии'
+        ordering = ('pub_date',)
+        default_related_name = 'comments'
+
+    def get_absolute_url(self):
+        return reverse(
+            'blog:post_detail',
+            kwargs={'post_id': self.post.pk}
+        )
