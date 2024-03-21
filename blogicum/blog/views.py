@@ -1,15 +1,17 @@
 from blog.forms import CommentForm, PostForm
-from blog.models import Category, Comment, Post, User
-from blog.utils import CommentMixin, get_valid_posts
+from blog.mixins import (
+    CommentMixin, PostChangeMixin,
+    CommentChangeMixin, ProfileRedirectMixin)
+from blog.models import Category, Post, User
+from blog.utils import get_valid_posts
+
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import PermissionDenied
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.shortcuts import get_object_or_404
 from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
                                   UpdateView)
 
 
-class PostCreateView(LoginRequiredMixin, CreateView):
+class PostCreateView(ProfileRedirectMixin, CreateView):
     model = Post
     template_name = 'blog/create.html'
     form_class = PostForm
@@ -17,11 +19,6 @@ class PostCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.author = self.request.user
         return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse_lazy(
-            'blog:profile', kwargs={'author': self.request.user}
-        )
 
 
 class PostDetailView(DetailView):
@@ -78,39 +75,16 @@ class CategoryListView(ListView):
         return context
 
 
-class PostUpdateView(LoginRequiredMixin, UpdateView):
-    model = Post
+class PostUpdateView(PostChangeMixin, UpdateView):
     form_class = PostForm
-    template_name = 'blog/create.html'
-    pk_url_kwarg = 'post_id'
-
-    def dispatch(self, request, *args, **kwargs):
-        instance = get_object_or_404(Post, pk=kwargs['post_id'])
-        if instance.author != request.user:
-            return redirect(instance)
-        return super().dispatch(request, *args, **kwargs)
 
 
-class PostDeleteView(LoginRequiredMixin, DeleteView):
-    model = Post
-    template_name = 'blog/create.html'
-    pk_url_kwarg = 'post_id'
+class PostDeleteView(PostChangeMixin, ProfileRedirectMixin, DeleteView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form'] = CommentForm(instance=self.object)
+        context['form'] = PostForm(instance=self.object)
         return context
-
-    def dispatch(self, request, *args, **kwargs):
-        instance = get_object_or_404(Post, pk=kwargs['post_id'])
-        if instance.author != request.user:
-            raise PermissionDenied
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_success_url(self):
-        return reverse_lazy(
-            'blog:profile', kwargs={'author': self.request.user}
-        )
 
 
 class CommentCreateView(CommentMixin, LoginRequiredMixin, CreateView):
@@ -126,25 +100,11 @@ class CommentCreateView(CommentMixin, LoginRequiredMixin, CreateView):
         return super().dispatch(request, *args, **kwargs)
 
 
-class CommentUpdateView(CommentMixin, LoginRequiredMixin, UpdateView):
+class CommentUpdateView(CommentChangeMixin, UpdateView):
     form_class = CommentForm
-    pk_url_kwarg = 'comment_id'
-
-    def dispatch(self, request, *args, **kwargs):
-        instance = get_object_or_404(Comment, pk=kwargs['comment_id'])
-        if instance.author != request.user:
-            raise PermissionDenied
-        return super().dispatch(request, *args, **kwargs)
 
 
-class CommentDeleteView(CommentMixin, LoginRequiredMixin, DeleteView):
-
-    def get_object(self):
-        obj = get_object_or_404(Comment.objects.select_related('author'),
-                                pk=self.kwargs['comment_id'])
-        if obj.author != self.request.user:
-            raise PermissionDenied
-        return obj
+class CommentDeleteView(CommentChangeMixin, DeleteView):
 
     def get_success_url(self):
         return self.object.get_absolute_url()
@@ -172,15 +132,13 @@ class ProfileListView(ListView):
         return context
 
 
-class ProfileEditView(UpdateView, LoginRequiredMixin):
+class ProfileEditView(ProfileRedirectMixin, UpdateView):
     model = User
     template_name = 'blog/user.html'
     fields = ('username', 'first_name', 'last_name', 'email')
 
     def get_object(self):
-        return get_object_or_404(User, username=self.request.user)
-
-    def get_success_url(self):
-        return reverse_lazy(
-            'blog:profile', kwargs={'author': self.request.user}
+        return get_object_or_404(
+            User,
+            username=self.request.user.username
         )

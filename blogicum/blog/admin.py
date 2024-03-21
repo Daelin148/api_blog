@@ -1,4 +1,5 @@
-from blog.models import Category, Location, Post
+from blog.models import Category, Comment, Location, Post
+
 from django.contrib import admin
 
 admin.site.empty_value_display = 'Не задано'
@@ -53,3 +54,17 @@ class LocationAdmin(admin.ModelAdmin):
         'is_published',
     )
     actions = (make_published,)
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = (
+        'pk',
+        'text',
+        'created_at',
+        'post',
+        'author',
+    )
+    list_editable = (
+        'text',
+    )

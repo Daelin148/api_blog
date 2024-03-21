@@ -1,10 +1,6 @@
-from blog.models import Comment, Post
+from blog.models import Post
+
 from django.utils import timezone
-
-
-class CommentMixin:
-    model = Comment
-    template_name = 'blog/comment.html'
 
 
 def get_valid_posts(is_guest=False, queryset=None):

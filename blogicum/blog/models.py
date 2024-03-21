@@ -6,7 +6,16 @@ TITLE_LIMIT = 30
 User = get_user_model()
 
 
-class BlogModel(models.Model):
+class CreatedAt(models.Model):
+    """Абстрактная модель, добавляющая поле даты добавления."""
+
+    created_at = models.DateTimeField('Добавлено', auto_now_add=True)
+
+    class Meta:
+        abstract = True
+
+
+class IsPublishedCreatedAt(CreatedAt):
     """Абстрактная модель. Добавляет общие поля для всех моделей."""
 
     is_published = models.BooleanField(
@@ -14,13 +23,12 @@ class BlogModel(models.Model):
         help_text='Снимите галочку, чтобы скрыть публикацию.',
         default=True
     )
-    created_at = models.DateTimeField('Добавлено', auto_now_add=True)
 
     class Meta:
         abstract = True
 
 
-class Category(BlogModel):
+class Category(IsPublishedCreatedAt):
     """Модель категорий публикаций."""
 
     title = models.CharField('Заголовок', max_length=256)
@@ -42,7 +50,7 @@ class Category(BlogModel):
         return self.title[:TITLE_LIMIT]
 
 
-class Location(BlogModel):
+class Location(IsPublishedCreatedAt):
     """Модель локации публикаций."""
 
     name = models.CharField('Название места', max_length=256)
@@ -55,7 +63,7 @@ class Location(BlogModel):
         return self.name[:TITLE_LIMIT]
 
 
-class Post(BlogModel):
+class Post(IsPublishedCreatedAt):
     """Модель публикаций."""
 
     title = models.CharField('Заголовок', max_length=256)
@@ -105,7 +113,7 @@ class Post(BlogModel):
         return Comment.objects.filter(post=self.pk).count()
 
 
-class Comment(models.Model):
+class Comment(CreatedAt):
     """Модель комментариев к публикациям."""
 
     text = models.TextField('Текст комментария')
@@ -114,10 +122,7 @@ class Comment(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Публикация'
     )
-    pub_date = models.DateTimeField(
-        'Дата и время комментария',
-        auto_now_add=True
-    )
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -127,7 +132,7 @@ class Comment(models.Model):
     class Meta:
         verbose_name = 'Комментарий'
         verbose_name_plural = 'комментарии'
-        ordering = ('pub_date',)
+        ordering = ('created_at',)
         default_related_name = 'comments'
 
     def get_absolute_url(self):
