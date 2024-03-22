@@ -4,6 +4,7 @@ from blog.mixins import (
     CommentChangeMixin, ProfileRedirectMixin)
 from blog.models import Category, Post, User
 from blog.utils import get_valid_posts
+from core.constants import POSTS_ON_PAGE
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
@@ -46,7 +47,7 @@ class PostDetailView(DetailView):
 
 class PostListView(ListView):
     template_name = 'blog/index.html'
-    paginate_by = 10
+    paginate_by = POSTS_ON_PAGE
 
     def get_queryset(self):
         return get_valid_posts(is_guest=True)
@@ -54,7 +55,7 @@ class PostListView(ListView):
 
 class CategoryListView(ListView):
     template_name = 'blog/category.html'
-    paginate_by = 10
+    paginate_by = POSTS_ON_PAGE
 
     def get_queryset(self):
         post_list = (
@@ -112,7 +113,7 @@ class CommentDeleteView(CommentChangeMixin, DeleteView):
 
 class ProfileListView(ListView):
     template_name = 'blog/profile.html'
-    paginate_by = 10
+    paginate_by = POSTS_ON_PAGE
 
     def get_queryset(self):
         if self.request.user.username != self.kwargs['author']:

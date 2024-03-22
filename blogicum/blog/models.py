@@ -1,44 +1,25 @@
+from core.models import CreatedAt, IsPublishedCreatedAt
+from core.constants import FIELD_TEXT_LIMIT, TITLE_LIMIT, SLUG_LIMIT
+
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.urls import reverse
 
-TITLE_LIMIT = 30
+
 User = get_user_model()
-
-
-class CreatedAt(models.Model):
-    """Абстрактная модель, добавляющая поле даты добавления."""
-
-    created_at = models.DateTimeField('Добавлено', auto_now_add=True)
-
-    class Meta:
-        abstract = True
-
-
-class IsPublishedCreatedAt(CreatedAt):
-    """Абстрактная модель. Добавляет общие поля для всех моделей."""
-
-    is_published = models.BooleanField(
-        'Опубликовано',
-        help_text='Снимите галочку, чтобы скрыть публикацию.',
-        default=True
-    )
-
-    class Meta:
-        abstract = True
 
 
 class Category(IsPublishedCreatedAt):
     """Модель категорий публикаций."""
 
-    title = models.CharField('Заголовок', max_length=256)
+    title = models.CharField('Заголовок', max_length=FIELD_TEXT_LIMIT)
     description = models.TextField('Описание')
     slug = models.SlugField(
         'Идентификатор',
         help_text=(
             'Идентификатор страницы для URL; разрешены'
             ' символы латиницы, цифры, дефис и подчёркивание.'),
-        max_length=64,
+        max_length=SLUG_LIMIT,
         unique=True
     )
 
@@ -53,7 +34,7 @@ class Category(IsPublishedCreatedAt):
 class Location(IsPublishedCreatedAt):
     """Модель локации публикаций."""
 
-    name = models.CharField('Название места', max_length=256)
+    name = models.CharField('Название места', max_length=FIELD_TEXT_LIMIT)
 
     class Meta:
         verbose_name = 'местоположение'
@@ -66,7 +47,7 @@ class Location(IsPublishedCreatedAt):
 class Post(IsPublishedCreatedAt):
     """Модель публикаций."""
 
-    title = models.CharField('Заголовок', max_length=256)
+    title = models.CharField('Заголовок', max_length=FIELD_TEXT_LIMIT)
     text = models.TextField('Текст')
     pub_date = models.DateTimeField(
         'Дата и время публикации',
